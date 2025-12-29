@@ -11,7 +11,8 @@ test('notifications panel updates when server emits', async ({ page }) => {
 
   // Trigger server-side emit via ws-server HTTP endpoint
   const api = 'http://localhost:4000/emit';
-  await request.newContext().post(api, {
+  const ctx = await request.newContext();
+  await ctx.post(api, {
     data: {
       event: 'notification',
       payload: { title: 'E2E test notification', body: 'This came from ws-server' }
