@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Install wakalti-app deps
+        run: |
+          cd wakalti-app
+          npm ci
+
+      - name: Lint
+        run: |
+          cd wakalti-app
+          npm run lint
+
+      - name: Unit tests (Vitest)
+        run: |
+          cd wakalti-app
+          npm run test:ci
+
+      - name: Install Playwright browsers
+        run: |
+          cd wakalti-app
+          npx playwright install --with-deps
+
+      - name: Start ws-server
+        run: |
+          docker compose up -d ws-server
+
+      - name: Start wakalti-app (dev server)
+        run: |
+          cd wakalti-app
+          npm run dev &
+          sleep 4
+
+      - name: E2E tests (Playwright)
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+        run: |
+          cd wakalti-app
+          npm run e2e
